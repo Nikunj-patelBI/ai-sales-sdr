@@ -1,0 +1,63 @@
+# Outreach sequences by lead tier
+
+sequences:
+  HOT:
+    name: "Hot Lead Sequence"
+    duration_days: 14
+    steps:
+      - day: 1
+        channel: email
+        type: personalized_intro
+        description: "Personalized intro referencing their specific challenge"
+      - day: 1
+        channel: linkedin
+        type: connection_request
+        description: "Send personalized connection request"
+      - day: 2
+        channel: phone
+        type: cold_call
+        description: "Call using AI-generated brief"
+      - day: 3
+        channel: email
+        type: value_add
+        description: "Share relevant AnalyticsGear blog post"
+      - day: 6
+        channel: email
+        type: case_study
+        description: "Brief case-study style proof point"
+      - day: 10
+        channel: email
+        type: bump
+        description: "Did this land? Short bump email"
+      - day: 14
+        channel: email
+        type: breakup
+        description: "Breakup email, leave door open"
+
+  WARM:
+    name: "Warm Lead Sequence"
+    duration_days: 10
+    steps:
+      - day: 1
+        channel: email
+        type: personalized_intro
+      - day: 1
+        channel: linkedin
+        type: connection_request
+      - day: 5
+        channel: email
+        type: value_add
+      - day: 10
+        channel: email
+        type: breakup
+
+  COLD:
+    name: "Cold Lead Sequence"
+    duration_days: 7
+    steps:
+      - day: 1
+        channel: email
+        type: template_intro
+      - day: 7
+        channel: email
+        type: breakup

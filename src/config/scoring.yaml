@@ -1,0 +1,26 @@
+# Lead scoring criteria (total: 100 points)
+
+weights:
+  decision_authority: 25   # Title seniority and purchasing influence
+  industry_fit: 20         # Alignment with target verticals
+  tech_stack_alignment: 20 # Use of Snowflake, Databricks, etc.
+  intent_signals: 20       # Hiring, funding, tech adoption
+  company_size_fit: 15     # 100-5000 employee sweet spot
+
+tiers:
+  HOT:
+    min_score: 75
+    max_score: 100
+    actions: [email, linkedin, phone]
+  WARM:
+    min_score: 50
+    max_score: 74
+    actions: [email, linkedin]
+  COLD:
+    min_score: 25
+    max_score: 49
+    actions: [email]
+  DISCARD:
+    min_score: 0
+    max_score: 24
+    actions: []

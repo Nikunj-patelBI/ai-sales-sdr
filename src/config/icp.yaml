@@ -1,0 +1,53 @@
+# Ideal Customer Profile configuration
+
+company:
+  size_min: 100
+  size_max: 5000
+  revenue_min: 10_000_000
+  revenue_max: 500_000_000
+
+industries:
+  - Banking & Financial Services
+  - Retail & CPG
+  - Healthcare & Life Sciences
+  - Manufacturing
+  - Logistics & Supply Chain
+  - Technology & SaaS
+
+roles:
+  - CTO
+  - VP Engineering
+  - Head of Data
+  - Chief Data Officer
+  - Data Engineering Manager
+  - VP Analytics
+  - Head of Platform
+  - Director of Data Engineering
+
+geographies:
+  - United States
+  - United Kingdom
+  - European Union
+  - Middle East
+  - India
+  - Southeast Asia
+
+tech_stack_signals:
+  - Snowflake
+  - Databricks
+  - BigQuery
+  - dbt
+  - Airflow
+  - Dagster
+  - Spark
+  - Kafka
+  - Tableau
+  - Power BI
+  - Looker
+
+intent_signals:
+  - hiring_data_roles
+  - recent_funding
+  - recent_leadership_change
+  - legacy_migration_mentions
+  - compliance_requirements

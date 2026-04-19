@@ -112,7 +112,9 @@ python -m src.agents.orchestrator --dry-run
 
 ## Status
 
-🚧 **In development** — Sprint 1 in progress.
+🚧 **Sprint 1 in progress** (Apr 20 – Apr 26). Day 1 partially complete: env + deps installed, tests passing, blocked on API keys + Docker Desktop.
+
+See [STATUS.md](./STATUS.md) for detailed progress, blockers, and how to pick up where we left off.
 
 ## License
 

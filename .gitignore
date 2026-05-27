@@ -50,11 +50,17 @@ ENV/
 htmlcov/
 .tox/
 
-# Local data / Qdrant storage
+# Local data / Qdrant storage / SQLite
 qdrant_data/
 src/data/qdrant_storage/
+data/pipeline.db
+data/pipeline.db-journal
+data/qdrant_storage/
 *.db
 *.sqlite
+
+# Daily reports (regenerated each run; can include if you want history)
+data/reports/
 
 # Logs
 *.log

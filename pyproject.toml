@@ -11,7 +11,6 @@ authors = [{ name = "AnalyticsGear" }]
 dependencies = [
     "anthropic>=0.40.0",     # the brain: scores + drafts emails
     "python-dotenv>=1.0.0",  # load API keys from .env
-    "pyyaml>=6.0",           # read config/icp.yaml + scoring.yaml
 ]
 
 [project.optional-dependencies]

@@ -1,4 +1,8 @@
-"""Smoke test — verify package imports correctly."""
+"""Smoke tests for the simple pipeline — no API calls, all free/offline."""
+import tempfile
+from pathlib import Path
+
+from src.pipeline import database
 
 
 def test_package_imports():
@@ -6,10 +10,30 @@ def test_package_imports():
     assert src.__version__ == "0.1.0"
 
 
-def test_chunker():
-    from src.rag.chunker import chunk_blog_post
+def test_db_init_and_schema(tmp_path):
+    db = tmp_path / "test.db"
+    database.init_db(db)
+    with database.connect(db) as conn:
+        tables = {r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )}
+    assert {"prospects", "outreach", "activities", "runs"}.issubset(tables)
 
-    text = " ".join(["word"] * 500)
-    chunks = chunk_blog_post(text, chunk_size=100, overlap=20)
-    assert len(chunks) > 1
-    assert all(len(c.split()) <= 100 for c in chunks)
+
+def test_upsert_and_dedup(tmp_path):
+    db = tmp_path / "test.db"
+    database.init_db(db)
+    lead = {"email": "a@b.com", "name": "A B", "title": "CTO",
+            "company": "Acme", "source": "test"}
+    with database.connect(db) as conn:
+        id1 = database.upsert_prospect(conn, lead)
+        id2 = database.upsert_prospect(conn, lead)  # same email -> no dup
+    assert id1 == id2
+
+
+def test_pipeline_stats_empty(tmp_path):
+    db = tmp_path / "test.db"
+    database.init_db(db)
+    with database.connect(db) as conn:
+        stats = database.pipeline_stats(conn)
+    assert stats["total"] == 0

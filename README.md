@@ -1,120 +1,107 @@
 # AnalyticsGear AI Sales Pipeline
 
-An AI-native sales pipeline built with **MCP**, **AI Agents**, **RAG**, and **Vector Databases**.
+A **simple** AI sales pipeline: it reads your leads, scores each one against your ideal customer profile, and writes a personalized cold email — automatically, every day.
 
-Dual-purpose project: (1) automates AnalyticsGear's sales outreach without a human SDR, (2) serves as a production reference implementation for AI consulting services we sell.
+Built for a solo founder. No servers, no vector DB, no complex infrastructure. One Python script + one Claude call per lead.
 
 ---
 
-## What This Is
+## What It Does
 
-A multi-agent AI system that runs daily and handles the full sales cycle:
+Every run:
+1. **Loads** new leads from `data/prospects.csv` (skips ones it's seen before)
+2. **Scores** each lead 0-100 against your ICP (one Claude call)
+3. **Drafts** a personalized email referencing their company, role, and tech
+4. **Saves** everything to a local SQLite database (your CRM)
+5. **Writes** a daily markdown report with the drafts + pipeline status
 
-- **Discovers** 25+ qualified leads per day from Apollo, LinkedIn, job boards, and intent signals
-- **Enriches & scores** each lead 1-100 against ICP criteria
-- **Generates** personalized outreach using RAG over company data + AnalyticsGear content
-- **Sends** across email + LinkedIn with multi-step sequences
-- **Monitors** engagement and classifies replies with AI
-- **Learns** from outcomes — successful patterns get stored and reused
-- **Reports** weekly performance with AI-generated insights
+You review the report, send the good emails, and record outcomes. The system never forgets a lead and always shows you what's next.
 
-Runs 2-4 hours/day on a schedule. Costs ~$350/month to operate vs. $3-5K/month for a junior SDR.
-
-## Architecture
+## Architecture (deliberately simple)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    AGENT LAYER                           │
-│   Prospecting · Outreach · Follow-Up · Analytics        │
-├─────────────────────────────────────────────────────────┤
-│                  MCP PROTOCOL LAYER                      │
-│  mcp-apollo · mcp-linkedin · mcp-email · mcp-crm ·       │
-│  mcp-vectordb · mcp-scraper                              │
-├─────────────────────────────────────────────────────────┤
-│                 KNOWLEDGE LAYER                          │
-│   Qdrant Vector DB · RAG Engine · Memory Store           │
-└─────────────────────────────────────────────────────────┘
+  data/prospects.csv  ──►  csv_loader  ──►  scorer (1 Claude call)  ──►  SQLite
+                                                                            │
+                              data/reports/today.md  ◄──  reporter  ◄───────┘
 ```
 
-See [docs/](./docs/) for full architecture and build plans.
-
-## Repository Structure
+Six files, ~700 lines:
 
 ```
-sales-pipeline/
-├── docs/                   # Strategy, architecture, and technical blueprints
-├── project_management/     # Sprint plan, Jira-style tracker (Excel)
-├── scripts/                # Document generation scripts
-├── src/
-│   ├── agents/             # Prospecting, Outreach, Follow-Up, Analytics agents
-│   ├── mcp_servers/        # 6 MCP servers (CRM, VectorDB, Email, Apollo, LinkedIn, Scraper)
-│   ├── rag/                # Embedding, chunking, retrieval modules
-│   ├── memory/             # Lead memory, pattern memory
-│   ├── feedback/           # Engagement tracking, pattern analysis, self-improvement
-│   ├── config/             # ICP, sequences, scoring configs
-│   ├── prompts/            # Agent system prompts
-│   └── data/               # Target company lists, exclusions
-├── tests/
-├── pyproject.toml
-├── docker-compose.yml
-└── .env.example
+src/pipeline/
+├── database.py       SQLite CRM (prospects, drafts, activity, runs)
+├── csv_loader.py     Load + dedupe leads
+├── scorer.py         ★ One Claude call: score + draft email
+├── daily_runner.py   Runs the daily cycle
+├── reporter.py       Daily markdown report
+└── update_status.py  Record outcomes (sent / replied / meeting / won / lost)
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Language | Python 3.12+ |
-| LLM | Anthropic Claude (Sonnet for agents, Haiku for scoring) |
-| Vector DB | Qdrant |
-| Embeddings | Voyage AI (voyage-3) |
-| Agent Framework | Custom ReAct loop + Claude Agent SDK |
-| MCP | `@modelcontextprotocol/sdk` |
-| Orchestration | APScheduler / Prefect |
-| Email | SendGrid + Instantly.ai (warmup) |
-| CRM | Google Sheets (migrating to HubSpot) |
-| Monitoring | Langfuse |
+| Layer | Tech | Cost |
+|-------|------|------|
+| Language | Python 3.12+ | Free |
+| AI | Anthropic Claude API | ~$5-10/mo |
+| CRM | SQLite (local file) | Free |
+| Scheduling | Windows Task Scheduler | Free |
+| Lead source | Apollo.io free tier (CSV export) | Free |
 
-## Build Plan
+Three Python deps: `anthropic`, `python-dotenv`, `pyyaml`.
 
-4-week sprint plan with 92 tasks — see [project_management/AnalyticsGear_AI_Pipeline_Project_Plan.xlsx](./project_management/AnalyticsGear_AI_Pipeline_Project_Plan.xlsx).
-
-| Sprint | Dates | Goal |
-|--------|-------|------|
-| Sprint 1 | Apr 20-26 | Foundation, RAG pipeline, first MCP server |
-| Sprint 2 | Apr 27-May 3 | All 6 MCP servers, Prospecting Agent |
-| Sprint 3 | May 4-10 | Outreach + Follow-Up agents, memory system |
-| Sprint 4 | May 11-17 | Analytics, orchestration, production, **GO LIVE** |
-
-## Getting Started (Local Dev)
+## Quick Start
 
 ```bash
-# 1. Clone and set up environment
-git clone <repo-url>
-cd sales-pipeline
+# 1. Install
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e .
+.venv\Scripts\activate
+pip install -e ".[dev]"
 
-# 2. Configure secrets
-cp .env.example .env
-# Fill in: ANTHROPIC_API_KEY, VOYAGE_API_KEY, APOLLO_API_KEY, SENDGRID_API_KEY
+# 2. Configure
+copy .env.example .env
+# Edit .env -> add your ANTHROPIC_API_KEY
 
-# 3. Start Qdrant
-docker compose up -d qdrant
+# 3. Add leads to data/prospects.csv (or convert an Apollo export):
+python scripts/apollo_to_prospects.py data/apollo_export.csv
 
-# 4. Initialize vector collections
-python -m src.rag.init_collections
+# 4. Run the pipeline
+python -m src.pipeline.daily_runner
 
-# 5. Run first agent (dry run)
-python -m src.agents.orchestrator --dry-run
+# 5. Read the report
+#    data/reports/<today>.md  -> review drafts, send the good ones
+
+# 6. Record outcomes as they happen
+python -m src.pipeline.update_status sarah@acme.com replied --note "asked about pricing"
 ```
 
-## Status
+## Automate It (daily, hands-off)
 
-🚧 **Sprint 1 in progress** (Apr 20 – Apr 26). Day 1 partially complete: env + deps installed, tests passing, blocked on API keys + Docker Desktop.
+```powershell
+# Registers a Windows scheduled task to run every morning at 8 AM
+powershell -ExecutionPolicy Bypass -File scripts\schedule_daily.ps1
+```
 
-See [STATUS.md](./STATUS.md) for detailed progress, blockers, and how to pick up where we left off.
+## The Workflow Today
+
+| Step | Who |
+|------|-----|
+| Find leads → CSV | You (Apollo export) |
+| Score + draft emails | The pipeline |
+| Review + send | You (from Gmail/Outlook) |
+| Track replies/meetings | You (`update_status`) |
+| Remember everything + report | The pipeline |
+
+Later phases automate sending (SendGrid) and reply tracking. See [ROADMAP.md](ROADMAP.md).
+
+## Roadmap
+
+- **Phase 1-2 (now):** This — load leads, draft emails, manual send, daily report
+- **Phase 3:** Automated sending (SendGrid + email warmup)
+- **Phase 4:** Auto lead sourcing (Apollo API)
+- **Phase 5:** Deploy to run unattended
+- **Later:** Evaluate n8n or OpenClaw for automation/chat updates
+
+Full detail in [ROADMAP.md](ROADMAP.md). Current progress in [STATUS.md](STATUS.md).
 
 ## License
 
